@@ -188,6 +188,8 @@ router.post('/:workspaceId/projects', async (req, res) => {
         res.status(500).json({ error: 'Server error. Could not create the project.' });
     }
 });
+
+
 //get project details by id
 // GET /api/workspaces/:workspaceId/projects/:projectId
 router.get('/:workspaceId/projects/:projectId', async (req, res) => {
@@ -217,12 +219,6 @@ router.get('/:workspaceId/projects/:projectId', async (req, res) => {
 });
 
 
-//get all projects
-
-
-
-
-//
 //update project details by id
 // PUT /api/workspaces/:workspaceId/projects/:projectId
 router.put('/:workspaceId/projects/:projectId', async (req, res) => {
@@ -261,6 +257,36 @@ router.put('/:workspaceId/projects/:projectId', async (req, res) => {
 
 //delete project by id
 // DELETE /api/workspaces/:workspaceId/projects/:projectId
+
+// router.delete('/:workspaceId/projects/:projectId', async (req, res) => {
+//     const { workspaceId, projectId } = req.params;
+
+//     try {
+//         // Check if the specified workspace exists
+//         const workspace = await Workspace.findById(workspaceId);
+//         if (!workspace) {
+//             return res.status(404).json({ error: 'Workspace not found.' });
+//         }
+
+//         // Check if the specified project exists within the workspace
+//         const project = await Project.findById(projectId);
+//         if (!project || project.workspace.toString() !== workspaceId) {
+//             return res.status(404).json({ error: 'Project tracker card not found.' });
+//         }
+
+//         // Remove the project from the workspace's projects array
+//         workspace.projects.pull(projectId);
+//         await workspace.save();
+
+//         // Delete the project from the database
+//         await project.remove();
+
+//         // Send the response with status 204 No Content
+//         res.sendStatus(204);
+//     } catch (error) {
+//         res.status(500).json({ error: 'Server error. Could not delete the project tracker card.' });
+//     }
+// });
 router.delete('/:workspaceId/projects/:projectId', async (req, res) => {
     const { workspaceId, projectId } = req.params;
 
@@ -273,16 +299,32 @@ router.delete('/:workspaceId/projects/:projectId', async (req, res) => {
 
         // Check if the specified project exists within the workspace
         const project = await Project.findById(projectId);
+        console.log("project\n\n", project);
+        console.log("project.workspace.toString()\n\n", project.workspace.toString());
+        console.log(project.workspace.includes(workspaceId))
         if (!project || project.workspace.toString() !== workspaceId) {
             return res.status(404).json({ error: 'Project tracker card not found.' });
         }
 
         // Remove the project from the workspace's projects array
-        workspace.projects.pull(projectId);
-        await workspace.save();
+        console.log("workspace.projects before:::::\n\n", workspace.projects);
+        if (workspace.projects.includes(projectId)) {
 
-        // Delete the project from the database
-        await project.remove();
+            workspace.projects.pull(projectId);
+            if (project.workspace.includes(workspaceId)) {
+                project.workspace.pull(workspaceId);
+            }
+        }
+        console.log("workspace.projects after:::::\n\n", workspace.projects);
+        await workspace.save();
+        console.log("workspace.projects after save:::::\n\n", workspace.projects);
+        console.log("workspace:::::\n\n", workspace);
+
+        // Delete the project from the database if it is not associated with any workspace
+        if (project.workspace.length === 0) {
+            // await project.remove();
+            await Project.findByIdAndDelete(projectId);
+        }
 
         // Send the response with status 204 No Content
         res.sendStatus(204);
@@ -291,4 +333,38 @@ router.delete('/:workspaceId/projects/:projectId', async (req, res) => {
     }
 });
 
+router.delete('/:workspaceId', async (req, res) => {
+    const { workspaceId } = req.params;
+
+    try {
+        // Check if the specified workspace exists
+        const workspace = await Workspace.findById(workspaceId);
+        if (!workspace) {
+            return res.status(404).json({ error: 'Workspace not found.' });
+        }
+
+        // Update all the projects associated with the workspace to remove the workspaceId
+        await Project.updateMany(
+            { _id: { $in: workspace.projects } },
+            { $pull: { workspace: workspaceId } }
+        );
+
+        // Check if the workspace array is empty for all projects
+        const projectsWithNoWorkspace = await Project.find({ workspace: { $size: 0 } });
+        const projectIdsToRemove = projectsWithNoWorkspace.map(project => project._id);
+
+        // Remove the projects that don't belong to any workspace
+        if (projectIdsToRemove.length > 0) {
+            await Project.deleteMany({ _id: { $in: projectIdsToRemove } });
+        }
+        // console.log("workspace.projects\n\n", workspace.projects);
+        // Remove the workspace from the database
+        await Workspace.findByIdAndDelete(workspaceId);
+
+        // If the workspace is successfully deleted, send a 204 No Content response
+        res.status(204).json({ msg: "Workspace Deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ error: 'Server error. Could not delete the workspace.' });
+    }
+});
 module.exports = router;

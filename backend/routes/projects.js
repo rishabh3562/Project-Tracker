@@ -10,7 +10,7 @@ router.get('/all', async (req, res) => {
         console.log("test1\n\n")
         const projects = await Project.find();
         console.log("projects\n\n", projects);
-        res.status(200).json(projects.length);
+        res.status(200).json(projects);
     } catch (error) {
         res.status(500).json({ error: 'Server error. Could not fetch projects.' });
     }
