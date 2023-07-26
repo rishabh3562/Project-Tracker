@@ -8,7 +8,7 @@ const workspaceSchema = new mongoose.Schema({
   name: { type: String, required: true },
   description: { type: String },
   projects: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Project' }],
-  displayData:[projectDataSchema],
+  displayData: [projectDataSchema],
   users: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 });

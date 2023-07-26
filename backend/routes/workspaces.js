@@ -1,4 +1,5 @@
 // routes/workspaces.js
+console.log('workspaces.js');
 const express = require('express');
 const router = express.Router();
 const Workspace = require('../models/Workspace');
@@ -31,6 +32,33 @@ router.get('/:workspaceId', async (req, res) => {
     }
 });
 
+//get all projects in workspace
+// GET /api/workspaces/:workspaceId/projects-details
+router.get('/:workspaceId/projects-details', async (req, res) => {
+    const { workspaceId } = req.params;
+    console.log("workspaceId\n\n", workspaceId);
+    try {
+        // Check if the specified workspace exists
+        console.log("test1\n\n")
+        const workspace = await Workspace.findById(workspaceId);
+        console.log("workspace\n\n", workspace);
+        if (!workspace) {
+            return res.status(404).json({ error: 'Workspace not found.' });
+        }
+
+        // Get the project IDs from the workspace's projects array
+
+        const projects = await Project.find({ _id: { $in: workspace.projects } });
+        console.log("projects\n\n", projects);
+
+        // Fetch project details for the project IDs in the workspace
+        // const projects = await Project.find({ _id: { $in: projectIds } });
+        console.log("projects\n\n", projects);
+        res.status(200).json(projects);
+    } catch (error) {
+        res.status(500).json({ error: 'Server error. Could not fetch project details.', msg: error });
+    }
+});
 // PUT /api/workspaces/:workspaceId
 router.put('/:workspaceId', async (req, res) => {
     const { workspaceId } = req.params;
@@ -54,20 +82,38 @@ router.put('/:workspaceId', async (req, res) => {
 });
 
 
+
 // DELETE /api/workspaces/:workspaceId
 router.delete('/:workspaceId', async (req, res) => {
     const { workspaceId } = req.params;
 
     try {
-        // Find the workspace by its ID and remove it from the database
-        const deletedWorkspace = await Workspace.findByIdAndDelete(workspaceId);
-
-        if (!deletedWorkspace) {
+        // Check if the specified workspace exists
+        const workspace = await Workspace.findById(workspaceId);
+        if (!workspace) {
             return res.status(404).json({ error: 'Workspace not found.' });
         }
 
+        // Update all the projects associated with the workspace to remove the workspaceId
+        await Project.updateMany(
+            { _id: { $in: workspace.projects } },
+            { $pull: { workspace: workspaceId } }
+        );
+
+        // Check if the workspace array is empty for all projects
+        const projectsWithNoWorkspace = await Project.find({ workspace: { $size: 0 } });
+        const projectIdsToRemove = projectsWithNoWorkspace.map(project => project._id);
+
+        // Remove the projects that don't belong to any workspace
+        if (projectIdsToRemove.length > 0) {
+            await Project.deleteMany({ _id: { $in: projectIdsToRemove } });
+        }
+        // console.log("workspace.projects\n\n", workspace.projects);
+        // Remove the workspace from the database
+        await Workspace.findByIdAndDelete(workspaceId);
+
         // If the workspace is successfully deleted, send a 204 No Content response
-        res.sendStatus(204);
+        res.status(204).json({ msg: "Workspace Deleted successfully" });
     } catch (error) {
         res.status(500).json({ error: 'Server error. Could not delete the workspace.' });
     }
@@ -78,8 +124,8 @@ router.delete('/:workspaceId', async (req, res) => {
 
 // Implement routes for creating, updating, and deleting projects.
 
-//create project
-// POST /api/workspaces/:workspaceId/projects
+
+//create new project
 router.post('/:workspaceId/projects', async (req, res) => {
     const { workspaceId } = req.params;
     const { name, description, status, timestamps, techStacks } = req.body;
@@ -142,7 +188,6 @@ router.post('/:workspaceId/projects', async (req, res) => {
         res.status(500).json({ error: 'Server error. Could not create the project.' });
     }
 });
-
 //get project details by id
 // GET /api/workspaces/:workspaceId/projects/:projectId
 router.get('/:workspaceId/projects/:projectId', async (req, res) => {
@@ -171,6 +216,13 @@ router.get('/:workspaceId/projects/:projectId', async (req, res) => {
     }
 });
 
+
+//get all projects
+
+
+
+
+//
 //update project details by id
 // PUT /api/workspaces/:workspaceId/projects/:projectId
 router.put('/:workspaceId/projects/:projectId', async (req, res) => {
