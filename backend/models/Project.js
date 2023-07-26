@@ -10,7 +10,7 @@ const projectSchema = new mongoose.Schema({
     end: { type: Date },
   },
   techStacks: [{ type: String }],
-  workspace: { type: mongoose.Schema.Types.ObjectId, ref: 'Workspace' },
+  workspace: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Workspace' }],
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 });
 

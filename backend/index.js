@@ -19,7 +19,7 @@ app.use(cors());
 // Mount API routes on the /api URI prefix
 app.use('/api/v1/users', usersRouter);
 app.use('/api/v1/workspaces', workspacesRouter);
-app.use('/api/v1/projects',projectsRouter);
+app.use('/api/v1/projects', projectsRouter);
 
 
 // Connect to MongoDB (replace 'mongodb://localhost/project_tracking_db' with your MongoDB connection string)
