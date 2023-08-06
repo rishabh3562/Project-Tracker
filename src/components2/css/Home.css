@@ -1,0 +1,19 @@
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Adjust the minimum and maximum card width as needed */
+    gap: 16px; /* Add gap between cards */
+    /* border: 2px solid blue; */
+    width: 90%;
+    margin: auto;
+  }
+  
+  .grid-item{
+    /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); */
+    border-radius: 4px;
+    /* border: 2px solid red; */
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    min-width: fit-content;
+    align-items: center;
+  }
