@@ -1,43 +1,36 @@
-import React, { useState } from "react";
-import { styled } from "@mui/material/styles";
-import Card from "@mui/material/Card";
-import CardHeader from "@mui/material/CardHeader";
-import CardContent from "@mui/material/CardContent";
-import CardActions from "@mui/material/CardActions";
-import Collapse from "@mui/material/Collapse";
-import Avatar from "@mui/material/Avatar";
-import IconButton from "@mui/material/IconButton";
-import Typography from "@mui/material/Typography";
-import { red, blue, green } from "@mui/material/colors";
-import FavoriteIcon from "@mui/icons-material/Favorite";
-import ShareIcon from "@mui/icons-material/Share";
+
+import React, { useState,useEffect } from "react";
+import { Card, CardHeader, CardContent, CardActions, IconButton, Typography, Dialog, DialogTitle, DialogContent, DialogActions, Button } from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
-import Dialog from "@mui/material/Dialog";
-import DialogTitle from "@mui/material/DialogTitle";
-import DialogContent from "@mui/material/DialogContent";
-import DialogActions from "@mui/material/DialogActions";
-import Button from "@mui/material/Button";
+import { red, blue, green } from "@mui/material/colors";
 import FileCopyIcon from "@mui/icons-material/FileCopy";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import TelegramIcon from "@mui/icons-material/Telegram";
-import DeleteIcon from "@mui/icons-material/Delete";
+
+import { styled } from "@mui/material/styles";
+
+
+
+
+import Collapse from "@mui/material/Collapse";
+import Avatar from "@mui/material/Avatar";
+
+
+import FavoriteIcon from "@mui/icons-material/Favorite";
+import ShareIcon from "@mui/icons-material/Share";
+
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+
+
+
+
 import UpdateIcon from "@mui/icons-material/Update";
 import EditIcon from "@mui/icons-material/Edit";
-import { deleteWorkspaceById } from "../api/workspaceApi";
+import { deleteWorkspaceById,getWorkspaceById,getWorkspaces,createWorkspace } from "../api/workspaceApi";
+// import { getWorkspaces, createWorkspace } from "../api/workspaceApi";
 
-const ExpandMore = styled((props) => {
-  const { expand, ...other } = props;
-  return <IconButton {...other} />;
-})(({ theme, expand }) => ({
-  transform: !expand ? "rotate(0deg)" : "rotate(180deg)",
-  marginLeft: "auto",
-  transition: theme.transitions.create("transform", {
-    duration: theme.transitions.duration.shortest,
-  }),
-}));
-
-const WorkSpaceCard = ({ id, title, projectNum, content }) => {
+const WorkSpaceCard = ({ id, title, projectNum, content, onDelete }) => {
   const [expanded, setExpanded] = useState(false);
   const [truncatedContent, setTruncatedContent] = useState(
     content.length > 50 ? content.slice(0, 50) + "..." : content
@@ -64,42 +57,23 @@ const WorkSpaceCard = ({ id, title, projectNum, content }) => {
   };
 
   const handleCopyClick = () => {
-    // Copy the content to the clipboard
     navigator.clipboard.writeText(content).then(() => {
       alert("Content copied to clipboard!");
     });
   };
 
   const handleWhatsAppShare = () => {
-    // Share via WhatsApp
     const shareURL = `whatsapp://send?text=${encodeURIComponent(content)}`;
     window.location.href = shareURL;
   };
 
   const handleTelegramShare = () => {
-    // Share via Telegram
     const shareURL = `tg://msg?text=${encodeURIComponent(content)}`;
     window.location.href = shareURL;
   };
 
-  const handleDeleteWorkspace = async () => {
-    console.log(id);
-    try {
-      // Perform API call to delete the workspace using the deleteWorkspace API function
-      await deleteWorkspaceById(id);
-      console.log("Workspace deleted successfully!");
-
-      // Remove the deleted workspace from the state
-    } catch (error) {
-      console.error("Error deleting workspace:", error);
-    }
-  };
-
-  const handleUpdateWorkspace = () => {
-    // Implement the logic to update the workspace using the 'id' prop
-    // For example:
-    // updateWorkspace(id, updatedData);
-    alert(`Workspace with ID ${id} will be updated!`);
+  const handleDeleteClick = () => {
+    onDelete(); // Call the onDelete function passed from the parent component
   };
 
   return (
@@ -108,11 +82,6 @@ const WorkSpaceCard = ({ id, title, projectNum, content }) => {
         <CardHeader
           sx={{ wordWrap: "break-word" }}
           avatar={<Avatar sx={{ bgcolor: red[500] }} aria-label="workspace" />}
-          action={
-            <IconButton aria-label="settings">
-              <MoreVertIcon />
-            </IconButton>
-          }
           title={title}
           subheader={projectNum + " projects"}
         />
@@ -123,32 +92,24 @@ const WorkSpaceCard = ({ id, title, projectNum, content }) => {
           </Typography>
         </CardContent>
         <CardActions disableSpacing>
-          <IconButton aria-label="add to favorites">
-            <FavoriteIcon />
-          </IconButton>
           <IconButton
             aria-label="delete workspace"
-            onClick={handleDeleteWorkspace}
+            onClick={handleDeleteClick}
           >
             <DeleteIcon />
           </IconButton>
           <IconButton
-            aria-label="update workspace"
-            onClick={handleUpdateWorkspace}
+            aria-label="share"
+            onClick={handleShareModalOpen}
           >
-            <EditIcon />
-          </IconButton>
-          <IconButton aria-label="share" onClick={handleShareModalOpen}>
             <ShareIcon />
           </IconButton>
-          <ExpandMore
-            expand={expanded}
-            onClick={handleExpandClick}
-            aria-expanded={expanded}
+          <IconButton
             aria-label="show more"
+            onClick={handleExpandClick}
           >
             <ExpandMoreIcon />
-          </ExpandMore>
+          </IconButton>
         </CardActions>
 
         {/* Share Modal */}

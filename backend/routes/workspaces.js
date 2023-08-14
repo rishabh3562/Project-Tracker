@@ -23,7 +23,7 @@ router.get('/', async (req, res) => {
         // Find all projects in the database
         console.log("test1\n\n")
         const Workspaces = await Workspace.find();
-        console.log("Workspace\n\n", Workspaces);
+        // console.log("Workspace\n\n", Workspaces);
         res.status(200).json(Workspaces);
     } catch (error) {
         res.status(500).json({ error: 'Server error. Could not fetch projects.' });
